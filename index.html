@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lös ut c — ekvationslösare</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,600;1,300&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f2ec;
+    --surface: #fffef9;
+    --ink: #1a1814;
+    --muted: #7a7670;
+    --accent: #c94a2b;
+    --accent-light: #f9e8e3;
+    --border: #dedad2;
+    --success-bg: #eaf4ec;
+    --success: #2a7a3b;
+    --error-bg: #fcecea;
+    --error: #b03030;
+    --mono: 'DM Mono', monospace;
+    --serif: 'Fraunces', Georgia, serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--mono);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 3rem 1.25rem 5rem;
+  }
+
+  header {
+    width: 100%;
+    max-width: 560px;
+    margin-bottom: 2.5rem;
+  }
+
+  .label-tag {
+    display: inline-block;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-light);
+    border: 1px solid #e8c4b8;
+    border-radius: 3px;
+    padding: 3px 8px;
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    font-family: var(--serif);
+    font-weight: 300;
+    font-size: clamp(2rem, 5vw, 2.8rem);
+    line-height: 1.15;
+    color: var(--ink);
+    margin-bottom: 0.6rem;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 0.5rem;
+  }
+
+  .equation-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 0.75rem 1rem;
+    font-size: 13px;
+    color: var(--ink);
+    margin-top: 1rem;
+    letter-spacing: 0.02em;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 560px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2rem;
+  }
+
+  .fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .field label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .field input {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.55rem 0.75rem;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+
+  .field input:focus {
+    border-color: var(--accent);
+    background: #fff;
+  }
+
+  .field .hint {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .solve-btn {
+    width: 100%;
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 0.05em;
+    color: #fff;
+    background: var(--accent);
+    border: none;
+    border-radius: 4px;
+    padding: 0.8rem;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  .solve-btn:hover { opacity: 0.88; }
+  .solve-btn:active { transform: scale(0.98); }
+
+  .result {
+    margin-top: 1.5rem;
+    display: none;
+    border-top: 1px solid var(--border);
+    padding-top: 1.5rem;
+  }
+
+  .result.visible { display: block; }
+
+  .result-label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+  }
+
+  .result-value {
+    font-family: var(--serif);
+    font-size: 2.4rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0.5rem;
+  }
+
+  .verify-pill {
+    display: inline-block;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 3px;
+    background: var(--success-bg);
+    color: var(--success);
+    border: 1px solid #b8dfc0;
+  }
+
+  .error-pill {
+    display: inline-block;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 3px;
+    background: var(--error-bg);
+    color: var(--error);
+    border: 1px solid #e8c0c0;
+  }
+
+  footer {
+    margin-top: 3rem;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    letter-spacing: 0.04em;
+  }
+
+  @media (max-width: 420px) {
+    .fields { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="label-tag">Numerisk ekvationslösare</div>
+  <h1>Lös ut <em>c</em></h1>
+  <p class="subtitle">Löser numeriskt för <strong>c</strong> ur ekvationen nedan, givet kända värden på övriga parametrar.</p>
+  <div class="equation-box">Cu = c · ( a + (b − a) / (1 + (e/c)^d) )</div>
+</header>
+
+<div class="card">
+  <div class="fields">
+    <div class="field">
+      <label>Cu</label>
+      <input type="number" id="Cu" value="5" step="any" />
+    </div>
+    <div class="field">
+      <label>a</label>
+      <input type="number" id="a" value="1" step="any" />
+    </div>
+    <div class="field">
+      <label>b</label>
+      <input type="number" id="b" value="10" step="any" />
+    </div>
+    <div class="field">
+      <label>e</label>
+      <input type="number" id="e" value="3" step="any" />
+    </div>
+    <div class="field">
+      <label>d</label>
+      <input type="number" id="d" value="2" min="0.1" max="10" step="0.1" />
+      <span class="hint">Mellan 0.1 och 10</span>
+    </div>
+  </div>
+
+  <button class="solve-btn" onclick="solve()">Beräkna c →</button>
+
+  <div class="result" id="result">
+    <div class="result-label">Lösning</div>
+    <div class="result-value" id="result-val"></div>
+    <div id="result-status"></div>
+  </div>
+</div>
+
+<footer>Löses med Brents metod &nbsp;·&nbsp; tolerans 10⁻¹⁰</footer>
+
+<script>
+function f(c, Cu, a, b, e, d) {
+  if (Math.abs(c) < 1e-15) return NaN;
+  return c * (a + (b - a) / (1 + Math.pow(e / c, d))) - Cu;
+}
+
+function brent(Cu, a, b, e, d) {
+  let lo, hi;
+  // find bracket
+  const signs = [];
+  const tries = [];
+  for (let exp = -6; exp <= 6; exp++) {
+    tries.push(Math.pow(10, exp));
+    tries.push(-Math.pow(10, exp));
+  }
+  tries.push(1e-4, 0.001, 0.01, 0.1, 1, 10, 100, 1000);
+  for (let i = 0; i < tries.length; i++) {
+    for (let j = i + 1; j < tries.length; j++) {
+      const fa = f(tries[i], Cu, a, b, e, d);
+      const fb = f(tries[j], Cu, a, b, e, d);
+      if (!isNaN(fa) && !isNaN(fb) && isFinite(fa) && isFinite(fb) && fa * fb < 0) {
+        lo = tries[i]; hi = tries[j]; break;
+      }
+    }
+    if (lo !== undefined) break;
+  }
+  if (lo === undefined) return null;
+
+  let fa = f(lo, Cu, a, b, e, d);
+  let fb = f(hi, Cu, a, b, e, d);
+  if (Math.abs(fa) < Math.abs(fb)) { [lo, hi] = [hi, lo]; [fa, fb] = [fb, fa]; }
+  let c = lo, fc = fa, mflag = true, s = 0, d_ = 0;
+  for (let i = 0; i < 200; i++) {
+    if (Math.abs(hi - lo) < 1e-12) break;
+    if (fa !== fc && fb !== fc) {
+      s = lo*fb*fc/((fa-fb)*(fa-fc)) + hi*fa*fc/((fb-fa)*(fb-fc)) + c*fa*fb/((fc-fa)*(fc-fb));
+    } else {
+      s = hi - fb*(hi-lo)/(fb-fa);
+    }
+    const cond1 = !((3*lo+hi)/4 < s && s < hi || hi < s && s < (3*lo+hi)/4);
+    const cond2 = mflag && Math.abs(s-hi) >= Math.abs(hi-c)/2;
+    const cond3 = !mflag && Math.abs(s-hi) >= Math.abs(c-d_)/2;
+    const cond4 = mflag && Math.abs(hi-c) < 1e-12;
+    const cond5 = !mflag && Math.abs(c-d_) < 1e-12;
+    if (cond1||cond2||cond3||cond4||cond5) { s=(lo+hi)/2; mflag=true; } else { mflag=false; }
+    const fs = f(s, Cu, a, b, e, d);
+    d_ = c; c = hi;
+    if (fa*fs < 0) { hi=s; fb=fs; } else { lo=s; fa=fs; }
+    if (Math.abs(fa) < Math.abs(fb)) { [lo,hi]=[hi,lo]; [fa,fb]=[fb,fa]; }
+    if (Math.abs(fb) < 1e-12) return hi;
+  }
+  return hi;
+}
+
+function solve() {
+  const Cu = parseFloat(document.getElementById('Cu').value);
+  const a  = parseFloat(document.getElementById('a').value);
+  const b  = parseFloat(document.getElementById('b').value);
+  const e  = parseFloat(document.getElementById('e').value);
+  const d  = parseFloat(document.getElementById('d').value);
+
+  const box = document.getElementById('result');
+  const val = document.getElementById('result-val');
+  const status = document.getElementById('result-status');
+  box.classList.add('visible');
+
+  if ([Cu, a, b, e, d].some(isNaN)) {
+    val.textContent = '—';
+    status.innerHTML = '<span class="error-pill">Fyll i alla fält.</span>';
+    return;
+  }
+  if (d < 0.1 || d > 10) {
+    val.textContent = '—';
+    status.innerHTML = '<span class="error-pill">d måste vara mellan 0.1 och 10.</span>';
+    return;
+  }
+
+  const c = brent(Cu, a, b, e, d);
+  if (c === null || isNaN(c) || !isFinite(c)) {
+    val.textContent = '—';
+    status.innerHTML = '<span class="error-pill">Ingen lösning hittades för dessa värden.</span>';
+    return;
+  }
+
+  const verify = c * (a + (b - a) / (1 + Math.pow(e / c, d)));
+  const err = Math.abs(verify - Cu);
+  val.textContent = 'c = ' + c.toFixed(8);
+  status.innerHTML = '<span class="verify-pill">✓ Verifiering: Cu ≈ ' + verify.toFixed(8) + ' &nbsp; fel: ' + err.toExponential(2) + '</span>';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Enter') solve(); });
+</script>
+</body>
+</html>
